@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmpresaModule } from './empresa/empresa.module';
+import { LocalModule } from './local/local.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -23,6 +24,7 @@ import { EmpresaModule } from './empresa/empresa.module';
     }),
 
     EmpresaModule,
+    LocalModule,
   ],
   controllers: [AppController],
   providers: [AppService],

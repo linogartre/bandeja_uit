@@ -6,8 +6,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-import { Local } from './local.entity';
-import { TipoPadron } from '../enums/tipo-padron.enum';
+import { Local } from './local.entity.js';
+import { TipoPadron } from '../enums/tipo-padron.enum.js';
 
 @Entity('padron')
 export class Padron {

@@ -6,10 +6,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { Local } from './entities/local.entity';
-import { Empresa } from '../empresa/entities/empresa.entity';
-import { CreateLocalDto } from './dto/create-local.dto';
-import { UpdateLocalDto } from './dto/update-local.dto';
+import { Local } from './entities/local.entity.js';
+import { Padron } from './entities/padron.entity.js';
+import { Empresa } from '../empresa/entities/empresa.entity.js';
+import { CreateLocalDto } from './dto/create-local.dto.js';
+import { UpdateLocalDto } from './dto/update-local.dto.js';
 import { SuministroAgua } from './enums/suministro-agua.enum.js';
 import { DisposicionEfluentes } from './enums/disposicion-efluentes.enum.js';
 
@@ -21,6 +22,9 @@ export class LocalService {
 
     @InjectRepository(Empresa)
     private readonly empresaRepository: Repository<Empresa>,
+
+    @InjectRepository(Padron)
+    private readonly padronRepository: Repository<Padron>,
   ) {}
 
   async create(createLocalDto: CreateLocalDto): Promise<Local> {
@@ -39,12 +43,27 @@ export class LocalService {
     this.validarReglasEfluentes(createLocalDto);
     this.validarReglasSuministro(createLocalDto);
 
+    const { padrones, ...datosLocal } = createLocalDto;
+
     const local = this.localRepository.create({
-      ...createLocalDto,
+      ...datosLocal,
       empresa_actual: empresa,
     });
 
-    return this.localRepository.save(local);
+    const localGuardado = await this.localRepository.save(local);
+
+    if (padrones) {
+      const padronesEntity = padrones.map((padronDto) =>
+        this.padronRepository.create({
+          ...padronDto,
+          local: localGuardado,
+        }),
+      );
+
+      await this.padronRepository.save(padronesEntity);
+    }
+
+    return this.findOne(localGuardado.local_id);
   }
 
   async findAll(): Promise<Local[]> {
@@ -88,16 +107,6 @@ export class LocalService {
         updateLocalDto.empresa_id_actual !== undefined
           ? updateLocalDto.empresa_id_actual
           : localActual.empresa_actual.empresa_id,
-
-      padron_numero:
-        updateLocalDto.padron_numero !== undefined
-          ? updateLocalDto.padron_numero
-          : localActual.padron_numero,
-
-      padron_tipo:
-        updateLocalDto.padron_tipo !== undefined
-          ? updateLocalDto.padron_tipo
-          : localActual.padron_tipo,
 
       direccion:
         updateLocalDto.direccion !== undefined
